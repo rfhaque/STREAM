@@ -40,6 +40,9 @@
 /*     program constitutes acceptance of these licensing restrictions.   */
 /*  5. Absolutely no warranty is expressed or implied.                   */
 /*-----------------------------------------------------------------------*/
+
+#include <caliper/cali.h>
+
 # include <stdio.h>
 # include <unistd.h>
 # include <math.h>
@@ -91,7 +94,7 @@
  *          per array.
  */
 #ifndef STREAM_ARRAY_SIZE
-#   define STREAM_ARRAY_SIZE	10000000
+#   define STREAM_ARRAY_SIZE	128000000
 #endif
 
 /*  2) STREAM runs each kernel "NTIMES" times and reports the *best* result
@@ -214,6 +217,11 @@ main()
     STREAM_TYPE		scalar;
     double		t, times[4][NTIMES];
 
+	cali_init();
+	cali_config_set("CALI_CALIPER_ATTRIBUTE_DEFAULT_SCOPE", "process");
+
+	CALI_MARK_FUNCTION_BEGIN;
+
     /* --- SETUP --- determine precision and check timing --- */
 
     printf(HLINE);
@@ -304,8 +312,11 @@ main()
     /*	--- MAIN LOOP --- repeat test cases NTIMES times --- */
 
     scalar = 3.0;
+	CALI_MARK_LOOP_BEGIN(l_ann, "mainloop");
     for (k=0; k<NTIMES; k++)
 	{
+	CALI_MARK_ITERATION_BEGIN(l_ann, k);
+	CALI_MARK_BEGIN("copy");
 	times[0][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Copy();
@@ -315,7 +326,9 @@ main()
 	    c[j] = a[j];
 #endif
 	times[0][k] = mysecond() - times[0][k];
+	CALI_MARK_END("copy");
 	
+	CALI_MARK_BEGIN("scale");
 	times[1][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
@@ -325,7 +338,9 @@ main()
 	    b[j] = scalar*c[j];
 #endif
 	times[1][k] = mysecond() - times[1][k];
+	CALI_MARK_END("scale");
 	
+	CALI_MARK_BEGIN("add");
 	times[2][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Add();
@@ -335,7 +350,9 @@ main()
 	    c[j] = a[j]+b[j];
 #endif
 	times[2][k] = mysecond() - times[2][k];
+	CALI_MARK_END("add");
 	
+	CALI_MARK_BEGIN("triad");
 	times[3][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
@@ -345,7 +362,10 @@ main()
 	    a[j] = b[j]+scalar*c[j];
 #endif
 	times[3][k] = mysecond() - times[3][k];
+	CALI_MARK_END("triad");
+	CALI_MARK_ITERATION_END(l_ann);
 	}
+	CALI_MARK_LOOP_END(l_ann);
 
     /*	--- SUMMARY --- */
 
@@ -374,6 +394,8 @@ main()
     /* --- Check Results --- */
     checkSTREAMresults();
     printf(HLINE);
+
+	CALI_MARK_FUNCTION_END;
 
     return 0;
 }

@@ -1,5 +1,7 @@
-CC = gcc-4.9
-CFLAGS = -O2 -fopenmp
+CALIPER_DIR=${HOME}/local/caliper/toss3-dev
+
+CC = gcc
+CFLAGS = -O2 -fopenmp -I$(CALIPER_DIR)/include -Wl,-rpath,$(CALIPER_DIR)/lib64 -L$(CALIPER_DIR)/lib64 -lcaliper-serial
 
 FC = gfortran-4.9
 FFLAGS = -O2 -fopenmp
