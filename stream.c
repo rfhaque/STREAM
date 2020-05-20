@@ -217,8 +217,8 @@ main()
     STREAM_TYPE		scalar;
     double		t, times[4][NTIMES];
 
-	cali_init();
 	cali_config_set("CALI_CALIPER_ATTRIBUTE_DEFAULT_SCOPE", "process");
+	cali_init();
 
 	CALI_MARK_FUNCTION_BEGIN;
 
