@@ -8,6 +8,8 @@ project(
 
 enable_testing()
 
+option(STREAM_ENABLE_CALIPER "Enable Caliper/Adiak support" FALSE)
+
 if(CMAKE_C_COMPILER_ID MATCHES "(GNU|Clang)")
   add_compile_options("$<$<COMPILE_LANGUAGE:C>:-O3;-march=native>")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
@@ -16,9 +18,19 @@ endif()
 
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   add_compile_options("$<$<COMPILE_LANGUAGE:Fortran>:-O3;-march=native;-Werror=line-truncation>")
-elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
   add_compile_options("$<$<COMPILE_LANGUAGE:Fortran>:-O3;-xHost>")
 endif()
+
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+add_definitions(-DSTREAM_CMAKE_BUILD=1)
+include_directories(${CMAKE_BINARY_DIR})
+
+configure_file(
+  "${CMAKE_SOURCE_DIR}/stream-config.h.in"
+  "${CMAKE_BINARY_DIR}/stream-config.h"
+)
 
 # The C STREAM benchmark only requires
 # stream.c
@@ -31,6 +43,12 @@ add_test(NAME STREAM_C COMMAND stream_c)
 add_executable(stream_f stream.f mysecond.c)
 
 add_test(NAME STREAM_Fortran COMMAND stream_f)
+
+if (STREAM_ENABLE_CALIPER)
+  find_package(caliper REQUIRED)
+  find_package(adiak REQUIRED)
+  target_link_libraries(stream_c PRIVATE caliper adiak::adiak)
+endif()
 
 # Look for OpenMP support is found, link it to the executables
 # Note that if you are using clang on macOS, you will need to

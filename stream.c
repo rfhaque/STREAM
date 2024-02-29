@@ -47,6 +47,14 @@
 # include <limits.h>
 # include <sys/time.h>
 
+#ifdef STREAM_CMAKE_BUILD
+#include "stream-config.h"
+#endif
+
+#ifdef STREAM_ENABLE_CALIPER
+#include <caliper/cali.h>
+#include <adiak.h>
+#endif
 /*-----------------------------------------------------------------------
  * INSTRUCTIONS:
  *
@@ -243,6 +251,27 @@ main()
     printf(" The *best* time for each kernel (excluding the first iteration)\n"); 
     printf(" will be used to compute the reported bandwidth.\n");
 
+#ifdef STREAM_ENABLE_CALIPER
+	cali_config_set("CALI_CALIPER_ATTRIBUTE_DEFAULT_SCOPE", "process");
+
+	adiak_init(NULL);
+	adiak_collect_all();
+
+   	adiak_namevalue("compiler", adiak_general, NULL, "%s", STREAM_COMPILER_ID);
+   	adiak_namevalue("compiler version", adiak_general, NULL, "%s", STREAM_COMPILER_VERSION);
+
+	adiak_namevalue("STREAM version", adiak_general, NULL, "%s", "5.10");
+	adiak_namevalue("ntimes", adiak_general, NULL, "%d", NTIMES);
+	adiak_namevalue("elements", adiak_general, NULL, "%llu", STREAM_ARRAY_SIZE);
+	adiak_namevalue("bytes_per_word", adiak_general, NULL, "%d", BytesPerWord);
+	adiak_namevalue("MiB_per_array", adiak_general, NULL, "%f", 
+		BytesPerWord * ((double) STREAM_ARRAY_SIZE) / 1024.0/1024.0);
+	adiak_namevalue("MiB_total", adiak_general, NULL, "%f", 
+		3.0 * BytesPerWord * ((double) STREAM_ARRAY_SIZE) / 1024.0/1024.0);
+
+	CALI_MARK_FUNCTION_BEGIN;
+#endif
+
 #ifdef _OPENMP
     printf(HLINE);
 #pragma omp parallel 
@@ -261,6 +290,10 @@ main()
 #pragma omp atomic 
 		k++;
     printf ("Number of Threads counted = %i\n",k);
+#endif
+
+#ifdef STREAM_ENABLE_CALIPER
+	adiak_namevalue("threads", adiak_general, NULL, "%d", k);
 #endif
 
     /* Get initial value for system clock. */
@@ -304,8 +337,15 @@ main()
     /*	--- MAIN LOOP --- repeat test cases NTIMES times --- */
 
     scalar = 3.0;
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_LOOP_BEGIN(mainloop, "mainloop");
+#endif
     for (k=0; k<NTIMES; k++)
 	{
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_ITERATION_BEGIN(mainloop, k);
+	CALI_MARK_BEGIN("Copy");
+#endif
 	times[0][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Copy();
@@ -315,7 +355,12 @@ main()
 	    c[j] = a[j];
 #endif
 	times[0][k] = mysecond() - times[0][k];
-	
+
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_END("Copy");
+	CALI_MARK_BEGIN("Scale");
+#endif
+
 	times[1][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
@@ -325,7 +370,12 @@ main()
 	    b[j] = scalar*c[j];
 #endif
 	times[1][k] = mysecond() - times[1][k];
-	
+
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_END("Scale");
+	CALI_MARK_BEGIN("Add");
+#endif
+
 	times[2][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Add();
@@ -336,6 +386,11 @@ main()
 #endif
 	times[2][k] = mysecond() - times[2][k];
 	
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_END("Add");
+	CALI_MARK_BEGIN("Triad");
+#endif
+
 	times[3][k] = mysecond();
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
@@ -345,8 +400,15 @@ main()
 	    a[j] = b[j]+scalar*c[j];
 #endif
 	times[3][k] = mysecond() - times[3][k];
-	}
 
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_END("Triad");
+	CALI_MARK_ITERATION_END(mainloop);
+#endif
+	}
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_LOOP_END(mainloop);
+#endif
     /*	--- SUMMARY --- */
 
     for (k=1; k<NTIMES; k++) /* note -- skip first iteration */
@@ -375,6 +437,14 @@ main()
     checkSTREAMresults();
     printf(HLINE);
 
+#ifdef STREAM_ENABLE_CALIPER
+	adiak_namevalue("Copy MB/s", adiak_performance, NULL, "%f", 1.0e-6 * bytes[0]/mintime[0]);
+	adiak_namevalue("Scale MB/s", adiak_performance, NULL, "%f", 1.0e-6 * bytes[1]/mintime[1]);
+	adiak_namevalue("Add MB/s", adiak_performance, NULL, "%f", 1.0e-6 * bytes[2]/mintime[2]);
+	adiak_namevalue("Triad MB/s", adiak_performance, NULL, "%f", 1.0e-6 * bytes[3]/mintime[3]);
+
+	CALI_MARK_FUNCTION_END;
+#endif
     return 0;
 }
 
@@ -439,6 +509,9 @@ void checkSTREAMresults ()
 	ssize_t	j;
 	int	k,ierr,err;
 
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_FUNCTION_BEGIN;
+#endif
     /* reproduce initialization */
 	aj = 1.0;
 	bj = 2.0;
@@ -545,6 +618,9 @@ void checkSTREAMresults ()
 	printf ("    Expected a(1), b(1), c(1): %f %f %f \n",aj,bj,cj);
 	printf ("    Observed a(1), b(1), c(1): %f %f %f \n",a[1],b[1],c[1]);
 	printf ("    Rel Errors on a, b, c:     %e %e %e \n",abs(aAvgErr/aj),abs(bAvgErr/bj),abs(cAvgErr/cj));
+#endif
+#ifdef STREAM_ENABLE_CALIPER
+	CALI_MARK_FUNCTION_END;
 #endif
 }
 
