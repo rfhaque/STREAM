@@ -257,8 +257,12 @@ main()
 	adiak_init(NULL);
 	adiak_collect_all();
 
+#ifdef STREAM_COMPILER_ID
    	adiak_namevalue("compiler", adiak_general, NULL, "%s", STREAM_COMPILER_ID);
+#endif
+#ifdef STRAM_COMPILER_VERSION
    	adiak_namevalue("compiler version", adiak_general, NULL, "%s", STREAM_COMPILER_VERSION);
+#endif
 
 	adiak_namevalue("STREAM version", adiak_general, NULL, "%s", "5.10");
 	adiak_namevalue("ntimes", adiak_general, NULL, "%d", NTIMES);
