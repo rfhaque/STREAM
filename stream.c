@@ -219,7 +219,7 @@ main(int argc, char* argv[])
 				break;
 			case 'h':
 			default:
-				fprintf(stderr, "Usage: %s [-n ntimes] [-s array_size] [-o offset]",
+				fprintf(stderr, "Usage: %s [-n ntimes] [-s array_size] [-o offset]\n",
 					argv[0]);
 				exit(0);
 		}
