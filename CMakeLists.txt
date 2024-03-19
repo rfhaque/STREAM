@@ -4,7 +4,7 @@ project(
   STREAM
   VERSION 1.0
   DESCRIPTION "STREAM benchmark"
-  LANGUAGES C Fortran)
+  LANGUAGES C)
 
 enable_testing()
 
@@ -14,12 +14,6 @@ if(CMAKE_C_COMPILER_ID MATCHES "(GNU|Clang)")
   add_compile_options("$<$<COMPILE_LANGUAGE:C>:-O3;-march=native>")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
   add_compile_options("$<$<COMPILE_LANGUAGE:C>:-O3;-xHost>")
-endif()
-
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-  add_compile_options("$<$<COMPILE_LANGUAGE:Fortran>:-O3;-march=native;-Werror=line-truncation>")
-elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
-  add_compile_options("$<$<COMPILE_LANGUAGE:Fortran>:-O3;-xHost>")
 endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -34,20 +28,14 @@ configure_file(
 
 # The C STREAM benchmark only requires
 # stream.c
-add_executable(stream_c stream.c)
+add_executable(stream stream.c)
 
-add_test(NAME STREAM_C COMMAND stream_c)
-
-# The Fortran STREAM benchmark requires
-# stream.f and mysecond.o from mysecond.c
-add_executable(stream_f stream.f mysecond.c)
-
-add_test(NAME STREAM_Fortran COMMAND stream_f)
+add_test(NAME STREAM_C COMMAND stream)
 
 if (STREAM_ENABLE_CALIPER)
   find_package(caliper REQUIRED)
   find_package(adiak REQUIRED)
-  target_link_libraries(stream_c PRIVATE caliper adiak::adiak)
+  target_link_libraries(stream PRIVATE caliper adiak::adiak)
 endif()
 
 # Look for OpenMP support is found, link it to the executables
@@ -57,9 +45,8 @@ endif()
 #   export OpenMP_ROOT=$(brew --prefix)/opt/libomp
 # see https://www.scivision.dev/cmake-openmp/ for more details
 
-find_package(OpenMP COMPONENTS C Fortran)
-target_link_libraries(stream_c PRIVATE $<$<BOOL:${OpenMP_C_FOUND}>:OpenMP::OpenMP_C>)
-target_link_libraries(stream_f PRIVATE $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>)
+find_package(OpenMP COMPONENTS C)
+target_link_libraries(stream PRIVATE $<$<BOOL:${OpenMP_C_FOUND}>:OpenMP::OpenMP_C>)
 
 # Per @scivision, ignore the build directory
 # (see https://www.scivision.dev/cmake-auto-gitignore-build-dir/)
@@ -68,7 +55,7 @@ if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 endif()
 
 install(TARGETS
-    stream_c stream_f
+    stream
   DESTINATION
     ${CMAKE_INSTALL_BINDIR}
 )
