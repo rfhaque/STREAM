@@ -66,3 +66,9 @@ target_link_libraries(stream_f PRIVATE $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP:
 if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   file(GENERATE OUTPUT .gitignore CONTENT "*")
 endif()
+
+install(TARGETS
+    stream_c stream_f
+  DESTINATION
+    ${CMAKE_INSTALL_BINDIR}
+)
