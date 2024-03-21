@@ -13,7 +13,7 @@ option(STREAM_ENABLE_CALIPER "Enable Caliper/Adiak support" FALSE)
 if(CMAKE_C_COMPILER_ID MATCHES "(GNU|Clang)")
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:-O3;-mcpu=native>")
-  else
+  else()
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:-O3;-march=native>")
   endif()
 elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
