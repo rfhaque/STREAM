@@ -528,7 +528,7 @@ double mysecond()
 #ifndef abs
 #define abs(a) ((a) >= 0 ? (a) : -(a))
 #endif
-void checkSTREAMresults (STREAM_TYPE *a, STREAM_TYPE *b, STREAM_TYPE *c, int NTIMES, size_t STREAM_ARRAY_SIZE)
+void checkSTREAMresults ()
 {
 	STREAM_TYPE aj,bj,cj,scalar;
 	STREAM_TYPE aSumErr,bSumErr,cSumErr;
