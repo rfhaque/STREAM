@@ -180,7 +180,7 @@ static char	*label[4] = {"Copy:      ", "Scale:     ",
 
 
 extern double mysecond();
-extern void checkSTREAMresults();
+extern void checkSTREAMresults(STREAM_TYPE *a, STREAM_TYPE *b, STREAM_TYPE *c, int NTIMES, size_t STREAM_ARRAY_SIZE);
 #ifdef TUNED
 extern void tuned_STREAM_Copy();
 extern void tuned_STREAM_Scale(STREAM_TYPE scalar);
@@ -454,7 +454,7 @@ main(int argc, char* argv[])
     printf(HLINE);
 
     /* --- Check Results --- */
-    checkSTREAMresults();
+    checkSTREAMresults(a, b, c, NTIMES, STREAM_ARRAY_SIZE);
     printf(HLINE);
 
 #ifdef STREAM_ENABLE_CALIPER
@@ -528,7 +528,7 @@ double mysecond()
 #ifndef abs
 #define abs(a) ((a) >= 0 ? (a) : -(a))
 #endif
-void checkSTREAMresults ()
+void checkSTREAMresults (STREAM_TYPE *a, STREAM_TYPE *b, STREAM_TYPE *c, int NTIMES, size_t STREAM_ARRAY_SIZE)
 {
 	STREAM_TYPE aj,bj,cj,scalar;
 	STREAM_TYPE aSumErr,bSumErr,cSumErr;
